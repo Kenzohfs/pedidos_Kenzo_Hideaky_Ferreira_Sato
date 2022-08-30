@@ -30,7 +30,7 @@ async function saveOrder(order) {
         return {
             error: "0001",
             message: "É necessário preencher os campos necessários!",
-            requiredFields: ["userId", "status", "products"]
+            requiredFields: ["userId", "products"]
         }
 
     if (await invalidProductsList(order.productsList))
@@ -110,8 +110,8 @@ async function deleteOrder(id) {
 }
 
 async function invalidOrder(order) {
-    if (order.userId && order.status && order.products &&
-        Object.keys(order).length == 3)
+    if (order.userId && order.products &&
+        Object.keys(order).length == 2)
         return false;
     return true;
 }
@@ -151,12 +151,14 @@ async function userHasOpenOrder(id) {
 }
 
 async function invalidProductsList(list) {
-    for (let item of list)
+    for (let item of list) {
         if (
             !(item.hasOwnProperty("productId") && item.hasOwnProperty("quantity"))
             && Object.keys(item).length != 2
-        )
+        ) {
             return true;
+        }
+    }
 
     return false;
 }
