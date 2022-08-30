@@ -1,0 +1,26 @@
+{
+  "name": "pedidos_kenzo_hideaky_ferreira_sato",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kenzohfs/pedidos_Kenzo_Hideaky_Ferreira_Sato.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Kenzohfs/pedidos_Kenzo_Hideaky_Ferreira_Sato/issues"
+  },
+  "homepage": "https://github.com/Kenzohfs/pedidos_Kenzo_Hideaky_Ferreira_Sato#readme",
+  "dependencies": {
+    "express": "^4.18.1",
+    "firebase": "^9.9.3",
+    "nodemon": "^2.0.19"
+  }
+}
