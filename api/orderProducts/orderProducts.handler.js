@@ -31,13 +31,19 @@ async function saveOrderProduct(orderProduct) {
             requiredFields: ["productId", "quantity", "orderId"]
         }
 
-    if (invalidProductId(orderProduct.productsId))
+    if (await invalidProductId(orderProduct.productsId))
         return {
             error: "0003",
             message: "ID de produto inválido!"
         }
 
-    const savedOrderProduct = await crud.save(tableOrderProducts, undefined, orderProduct);
+    let savedOrderProduct;
+
+    if (await orderHasProduct(orderProduct)) {
+        await updateQuantityProduct(orderProduct);
+    } else {
+        savedOrderProduct = await crud.save(tableOrderProducts, undefined, orderProduct);
+    }
 
     return savedOrderProduct;
 }
@@ -124,6 +130,26 @@ async function orderIsClosed(orderId) {
     if (order.status == statusAberto)
         return false;
     return true;
+}
+
+async function orderHasProduct(orderProduct) {
+    const orderProducts = await crud.getWithFilter(tableOrderProducts, "==", "orderId", orderProduct.orderId);
+
+    for (let orderProductFiltered of orderProducts) {
+        if (orderProductFiltered.productId == orderProduct.productId) {
+            return true;
+        }
+    }
+}
+
+async function updateQuantityProduct(orderProduct) {
+    const orderProductFiltered = await crud.getWithFilter(tableOrderProducts, "==", "productId", orderProduct.productId);
+
+    for (let orderProductFiltered of orderProductFiltered) {
+        if (orderProductFiltered.productId == orderProduct.productId) {
+            return true;
+        }
+    }
 }
 
 module.exports = {

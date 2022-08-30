@@ -30,17 +30,18 @@ async function saveOrder(order) {
         return {
             error: "0001",
             message: "É necessário preencher os campos necessários!",
-            requiredFields: ["userId", "products"]
+            requiredFields: ["userId"],
+            optionalFields: ["products"]
         }
 
-    if (await invalidProductsList(order.productsList))
+    if (order.products && await invalidProductsList(order.productsList))
         return {
             error: "0001",
             message: "É necessário preencher os campos necessários da lista de produtos!",
             requiredFields: ["productId", "quantidade"]
         }
 
-    if (await invalidProductsId(order.productsList))
+    if (order.products && await invalidProductsId(order.productsList))
         return {
             error: "0003",
             message: "ID de produto inválido!"
@@ -61,14 +62,19 @@ async function saveOrder(order) {
         }
 
     order.number = await addNumberOrder(order.userId);
+    let savedOrder;
 
-    const productsList = order.products;
-    delete order.products;
+    if (order.products) {
+        const productsList = order.products;
+        delete order.products;
 
-    const savedOrder = await crud.save(tableOrders, undefined, order);
+        savedOrder = await crud.save(tableOrders, undefined, order);
 
-    for (let product of productsList) {
-        await OrderProductsHandler.saveOrderProduct({ ...product, orderId: savedOrder.id });
+        for (let product of productsList) {
+            await OrderProductsHandler.saveOrderProduct({ ...product, orderId: savedOrder.id });
+        }
+    } else {
+        savedOrder = await crud.save(tableOrders, undefined, order);
     }
 
     return savedOrder;
@@ -110,9 +116,13 @@ async function deleteOrder(id) {
 }
 
 async function invalidOrder(order) {
+    if (order.userId && Object.keys(order).length == 1)
+        return false;
+
     if (order.userId && order.products &&
         Object.keys(order).length == 2)
         return false;
+
     return true;
 }
 
