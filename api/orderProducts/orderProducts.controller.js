@@ -27,6 +27,12 @@ router.put("/:id", async (req, res) => {
     }));
 });
 
+router.delete("/", async (req, res) => {
+    res.json(await orderProductsHandler.deleteProducts(req.body).catch(error => {
+        res.status(404).json(error);
+    }));
+});
+
 router.delete("/:id", async (req, res) => {
     res.json(await orderProductsHandler.deleteOrderProduct(req.params.id).catch(error => {
         res.status(404).json(error);

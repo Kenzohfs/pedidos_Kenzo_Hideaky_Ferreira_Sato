@@ -107,6 +107,28 @@ async function updateOrderProduct(id, orderProduct) {
     return newOrderProduct;
 }
 
+async function deleteProducts(productsList) {
+    let errorHasOcured = false;
+
+    if (Array.isArray(productsList)) {
+        for (let product of productsList) {
+            message = await removeProduct(product);
+
+            if (message.error) {
+                errorHasOcured = true;
+            }
+        }
+    } else {
+        message = await removeProduct(productsList);
+    }
+
+    if (!message.error || !errorHasOcured) {
+        message = { message: `Produto(s) removido(s) do pedido com sucesso!` };
+    }
+
+    return message;
+}
+
 async function deleteOrderProduct(id) {
     if (await invalidId(id))
         return {
@@ -118,6 +140,25 @@ async function deleteOrderProduct(id) {
     const deletedOrderProduct = await crud.remove(tableOrderProducts, id);
 
     return deletedOrderProduct;
+}
+
+async function removeProduct(oldProduct) {
+    const products = await crud.getWithFilter(tableOrderProducts, "==", "productId", oldProduct.productId);
+
+    let id;
+    for (let product of products) {
+        if (product.productId == oldProduct.productId) {
+            product.quantity -= oldProduct.quantity;
+            id = product.id;
+            delete product.id;
+
+            if (product.quantity <= 0) {
+                return await deleteOrderProduct(id);
+            } else {
+                return await crud.save(tableOrderProducts, id, product);
+            }
+        }
+    }
 }
 
 function invalidOrderProduct(orderProduct) {
@@ -191,5 +232,6 @@ module.exports = {
     addOrderProduct,
     saveOrderProduct,
     updateOrderProduct,
+    deleteProducts,
     deleteOrderProduct
 }
