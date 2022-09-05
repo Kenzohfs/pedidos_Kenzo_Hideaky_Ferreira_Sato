@@ -16,7 +16,7 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-    res.json(await orderProductsHandler.saveOrderProduct(req.body).catch(error => {
+    res.json(await orderProductsHandler.addOrderProduct(req.body).catch(error => {
         res.status(404).json(error);
     }));
 });

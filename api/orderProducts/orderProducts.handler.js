@@ -23,6 +23,28 @@ async function getOrderProduct(id) {
     return orderProduct;
 }
 
+async function addOrderProduct(products) {
+    let errorHasOcured = false;
+
+    if (Array.isArray(products)) {
+        for (let product of products) {
+            message = await saveOrderProduct(product);
+
+            if (message.error) {
+                errorHasOcured = true;
+            }
+        }
+    } else {
+        message = await saveOrderProduct(products);
+    }
+
+    if (!message.error || !errorHasOcured) {
+        message = { message: `Produto(s) adicionado(s) ao pedido com sucesso!` };
+    }
+
+    return message;
+}
+
 async function saveOrderProduct(orderProduct) {
     if (invalidOrderProduct(orderProduct))
         return {
@@ -30,20 +52,27 @@ async function saveOrderProduct(orderProduct) {
             message: "É necessário preencher os campos necessários!",
             requiredFields: ["productId", "quantity", "orderId"]
         }
-        
+
     if (await invalidProductId(orderProduct.productId))
         return {
             error: "0003",
             message: "ID de produto inválido!"
         }
 
+    if (await orderIsClosed(orderProduct.orderId))
+        return {
+            error: "0005",
+            message: "Pedido está fechado!",
+            orderId: orderProduct.orderId
+        }
+
     let savedOrderProduct;
 
-    // if (await orderHasProduct(orderProduct)) {
-    //     await updateQuantityProduct(orderProduct);
-    // } else {
-    savedOrderProduct = await crud.save(tableOrderProducts, undefined, orderProduct);
-    // }
+    if (await orderHasProduct(orderProduct)) {
+        savedOrderProduct = await updateQuantityProduct(orderProduct);
+    } else {
+        savedOrderProduct = await crud.save(tableOrderProducts, undefined, orderProduct);
+    }
 
     return savedOrderProduct;
 }
@@ -112,20 +141,18 @@ async function invalidId(id) {
 
 async function invalidProductId(productId) {
     let invalidProduct = true;
-    
-    try  {
+
+    try {
         await crud.getById(tableProducts, productId)
     } catch (error) {
-        console.log("Entrou catch");
         invalidProduct = false;
     }
-    
+
     return invalidProduct;
 }
 
 async function orderIsClosed(orderId) {
     const order = await crud.getById(tableOrders, orderId);
-
     if (order.status == statusAberto)
         return false;
     return true;
@@ -139,14 +166,21 @@ async function orderHasProduct(orderProduct) {
             return true;
         }
     }
+
+    return false;
 }
 
 async function updateQuantityProduct(orderProduct) {
-    const orderProductFiltered = await crud.getWithFilter(tableOrderProducts, "==", "productId", orderProduct.productId);
+    const productsFiltered = await crud.getWithFilter(tableOrderProducts, "==", "orderId", orderProduct.orderId);
+    
+    let id;
+    for (let product of productsFiltered) {
+        if (product.productId == orderProduct.productId) {
+            product.quantity += orderProduct.quantity;
+            id = product.id;
+            delete product.id;
 
-    for (let orderProductFiltered of orderProductFiltered) {
-        if (orderProductFiltered.productId == orderProduct.productId) {
-            return true;
+            return await crud.save(tableOrderProducts, id, product);
         }
     }
 }
@@ -154,6 +188,7 @@ async function updateQuantityProduct(orderProduct) {
 module.exports = {
     getOrderProducts,
     getOrderProduct,
+    addOrderProduct,
     saveOrderProduct,
     updateOrderProduct,
     deleteOrderProduct
