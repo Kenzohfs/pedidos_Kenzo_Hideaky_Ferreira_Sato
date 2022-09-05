@@ -30,8 +30,8 @@ async function saveOrderProduct(orderProduct) {
             message: "É necessário preencher os campos necessários!",
             requiredFields: ["productId", "quantity", "orderId"]
         }
-
-    if (await invalidProductId(orderProduct.productsId))
+        
+    if (await invalidProductId(orderProduct.productId))
         return {
             error: "0003",
             message: "ID de produto inválido!"
@@ -39,11 +39,11 @@ async function saveOrderProduct(orderProduct) {
 
     let savedOrderProduct;
 
-    if (await orderHasProduct(orderProduct)) {
-        await updateQuantityProduct(orderProduct);
-    } else {
-        savedOrderProduct = await crud.save(tableOrderProducts, undefined, orderProduct);
-    }
+    // if (await orderHasProduct(orderProduct)) {
+    //     await updateQuantityProduct(orderProduct);
+    // } else {
+    savedOrderProduct = await crud.save(tableOrderProducts, undefined, orderProduct);
+    // }
 
     return savedOrderProduct;
 }
@@ -71,7 +71,7 @@ async function updateOrderProduct(id, orderProduct) {
         }
 
     const newOrderProduct = await crud.save(tableOrderProducts, id, orderProduct);
-    
+
     if (newOrderProduct.quantity <= 0)
         await deleteOrderProduct(newOrderProduct.id);
 
@@ -111,17 +111,16 @@ async function invalidId(id) {
 }
 
 async function invalidProductId(productId) {
-    const invalidProduct = await crud.getById(tableProducts, productId)
-        .then(() => {
-            return false;
-        })
-        .catch(() => {
-            return true;
-        });
-
-    if (invalidProduct) {
-        return true;
+    let invalidProduct = true;
+    
+    try  {
+        await crud.getById(tableProducts, productId)
+    } catch (error) {
+        console.log("Entrou catch");
+        invalidProduct = false;
     }
+    
+    return invalidProduct;
 }
 
 async function orderIsClosed(orderId) {

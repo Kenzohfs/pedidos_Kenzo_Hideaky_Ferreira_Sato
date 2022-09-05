@@ -34,14 +34,14 @@ async function saveOrder(order) {
             optionalFields: ["products"]
         }
 
-    if (order.products && await invalidProductsList(order.productsList))
+    if (order.products && await invalidProductsList(order.products))
         return {
             error: "0001",
             message: "É necessário preencher os campos necessários da lista de produtos!",
             requiredFields: ["productId", "quantidade"]
         }
 
-    if (order.products && await invalidProductsId(order.productsList))
+    if (order.products && await invalidProductsId(order.products))
         return {
             error: "0003",
             message: "ID de produto inválido!"
@@ -62,9 +62,12 @@ async function saveOrder(order) {
         }
 
     order.number = await addNumberOrder(order.userId);
+    order.status = statusAberto;
+
     let savedOrder;
 
     if (order.products) {
+        console.log("entrou");
         const productsList = order.products;
         delete order.products;
 
@@ -153,9 +156,11 @@ async function invalidUser(id) {
 async function userHasOpenOrder(id) {
     const ordersList = await crud.getWithFilter(tableOrders, "==", "userId", id);
 
-    for (let order of ordersList)
-        if (order.status == statusAberto)
+    for (let order of ordersList) {
+        if (order.status == statusAberto) {
             return true;
+        }
+    }
 
     return false;
 }
@@ -187,6 +192,8 @@ async function invalidProductsId(list) {
             return true;
         }
     }
+
+    return false;
 }
 
 async function addNumberOrder(userId) {
