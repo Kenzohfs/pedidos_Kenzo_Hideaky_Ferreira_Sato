@@ -4,6 +4,7 @@ const OrderProductsHandler = require("../orderProducts/orderProducts.handler")
 const tableOrders = "Orders";
 const tableUsers = "Users";
 const tableProducts = "Products";
+const tableOrderProducts = "OrderProducts";
 const statusAberto = "Aberto";
 
 async function getOrders() {
@@ -97,6 +98,14 @@ async function updateOrder(id, order) {
             message: "ID inválido!",
             invalidId: id
         }
+
+    if (await orderWithoutProducts(id)) {
+        return {
+            error: "0006",
+            message: "Pedido não possui produtos!",
+            orderId: id
+        }
+    }
 
     const oldOrder = await crud.getById(tableOrders, id);
     delete oldOrder.status;
@@ -200,6 +209,15 @@ async function addNumberOrder(userId) {
     const orders = await crud.getWithFilter(tableOrders, "==", "userId", userId);
 
     return (orders.length + 1);
+}
+
+async function orderWithoutProducts(id) {
+    const products = await crud.getWithFilter(tableOrderProducts, "==", "orderId", id);
+
+    if (products.length == 0) 
+        return true;
+        
+    return false;
 }
 
 module.exports = {

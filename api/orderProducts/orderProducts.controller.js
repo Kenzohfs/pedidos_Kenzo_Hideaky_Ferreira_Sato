@@ -21,12 +21,6 @@ router.post("/", async (req, res) => {
     }));
 });
 
-router.put("/:id", async (req, res) => {
-    res.json(await orderProductsHandler.updateOrderProduct(req.params.id, req.body).catch(error => {
-        res.status(404).json(error);
-    }));
-});
-
 router.delete("/", async (req, res) => {
     res.json(await orderProductsHandler.deleteProducts(req.body).catch(error => {
         res.status(404).json(error);

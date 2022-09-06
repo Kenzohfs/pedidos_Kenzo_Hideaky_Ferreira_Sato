@@ -2,6 +2,7 @@ const crud = require("../../crud/index");
 
 const tableOrderProducts = "OrderProducts";
 const tableOrders = "Orders";
+const tableProducts = "Products";
 const statusAberto = "Aberto";
 
 async function getOrderProducts() {
@@ -59,6 +60,12 @@ async function saveOrderProduct(orderProduct) {
             message: "ID de produto inválido!"
         }
 
+    if (await invalidOrderId(orderProduct.orderId))
+        return {
+            error: "0003",
+            message: "ID de pedido inválido!"
+        }
+
     if (await orderIsClosed(orderProduct.orderId))
         return {
             error: "0005",
@@ -75,36 +82,6 @@ async function saveOrderProduct(orderProduct) {
     }
 
     return savedOrderProduct;
-}
-
-async function updateOrderProduct(id, orderProduct) {
-    if (invalidOrder(orderProduct) && !orderProduct.orderId)
-        return {
-            error: "0001",
-            message: "É necessário preencher os campos necessários!",
-            requiredFields: ["productId", "quantity", "orderId"]
-        }
-
-    if (await invalidId(id))
-        return {
-            error: "0003",
-            message: "ID inválido!",
-            invalidId: id
-        }
-
-    if (await orderIsClosed(orderProduct.orderId))
-        return {
-            error: "0005",
-            message: "Pedido está fechado!",
-            orderId: orderProduct.orderId
-        }
-
-    const newOrderProduct = await crud.save(tableOrderProducts, id, orderProduct);
-
-    if (newOrderProduct.quantity <= 0)
-        await deleteOrderProduct(newOrderProduct.id);
-
-    return newOrderProduct;
 }
 
 async function deleteProducts(productsList) {
@@ -143,6 +120,32 @@ async function deleteOrderProduct(id) {
 }
 
 async function removeProduct(oldProduct) {
+    if (invalidOrderProduct(oldProduct))
+        return {
+            error: "0001",
+            message: "É necessário preencher os campos necessários!",
+            requiredFields: ["productId", "quantity", "orderId"]
+        }
+
+    if (await invalidProductId(oldProduct.productId))
+        return {
+            error: "0003",
+            message: "ID de produto inválido!"
+        }
+
+    if (await invalidOrderId(oldProduct.orderId))
+        return {
+            error: "0003",
+            message: "ID de pedido inválido!"
+        }
+
+    if (await orderIsClosed(oldProduct.orderId))
+        return {
+            error: "0005",
+            message: "Pedido está fechado!",
+            orderId: oldProduct.orderId
+        }
+
     const products = await crud.getWithFilter(tableOrderProducts, "==", "productId", oldProduct.productId);
 
     let id;
@@ -181,15 +184,27 @@ async function invalidId(id) {
 }
 
 async function invalidProductId(productId) {
-    let invalidProduct = true;
+    let invalidProduct = false;
 
     try {
-        await crud.getById(tableProducts, productId)
+        await crud.getById(tableProducts, productId);
     } catch (error) {
-        invalidProduct = false;
+        invalidProduct = true;
     }
 
     return invalidProduct;
+}
+
+async function invalidOrderId(orderId) {
+    let invalidOrder = false;
+
+    try {
+        await crud.getById(tableOrders, orderId);
+    } catch (error) {
+        invalidOrder = true;
+    }
+
+    return invalidOrder;
 }
 
 async function orderIsClosed(orderId) {
@@ -213,7 +228,7 @@ async function orderHasProduct(orderProduct) {
 
 async function updateQuantityProduct(orderProduct) {
     const productsFiltered = await crud.getWithFilter(tableOrderProducts, "==", "orderId", orderProduct.orderId);
-    
+
     let id;
     for (let product of productsFiltered) {
         if (product.productId == orderProduct.productId) {
@@ -231,7 +246,6 @@ module.exports = {
     getOrderProduct,
     addOrderProduct,
     saveOrderProduct,
-    updateOrderProduct,
     deleteProducts,
     deleteOrderProduct
 }
