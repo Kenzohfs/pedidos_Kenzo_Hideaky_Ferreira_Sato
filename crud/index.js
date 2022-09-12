@@ -82,9 +82,9 @@ async function remove(nomeTabela, id) {
     }
 }
 
-async function getWithFilter(nomeTabela, operator, nomeDado, dado) {
+async function getWithFilter(nomeTabela, operador, nomeDado, dado) {
     const tableRef = collection(db, nomeTabela);
-    const q = query(tableRef, where(nomeDado, operator, dado));
+    const q = query(tableRef, where(nomeDado, operador, dado));
     const data = await getDocs(q)
 
     const lista = [];

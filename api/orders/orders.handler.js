@@ -68,7 +68,6 @@ async function saveOrder(order) {
     let savedOrder;
 
     if (order.products) {
-        console.log("entrou");
         const productsList = order.products;
         delete order.products;
 
